@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/sidecl/static/css/main.f347f844.css",
+    "main.js": "/sidecl/static/js/main.0cad8ee9.js",
+    "index.html": "/sidecl/index.html",
+    "main.f347f844.css.map": "/sidecl/static/css/main.f347f844.css.map",
+    "main.0cad8ee9.js.map": "/sidecl/static/js/main.0cad8ee9.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.f347f844.css",
+    "static/js/main.0cad8ee9.js"
+  ]
+}
