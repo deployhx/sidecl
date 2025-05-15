@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/sidewayclone/static/css/main.f347f844.css",
+    "main.js": "/sidewayclone/static/js/main.0cad8ee9.js",
+    "index.html": "/sidewayclone/index.html",
+    "main.f347f844.css.map": "/sidewayclone/static/css/main.f347f844.css.map",
+    "main.0cad8ee9.js.map": "/sidewayclone/static/js/main.0cad8ee9.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.f347f844.css",
+    "static/js/main.0cad8ee9.js"
+  ]
+}

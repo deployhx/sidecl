@@ -1,0 +1,253 @@
+import { format } from "date-fns";
+import { useState, useEffect, useRef } from "react";
+import { Link, useParams } from "react-router-dom";
+import {
+  Typography,
+  Box,
+  Grid,
+  Avatar,
+  LinearProgress,
+  Button,
+} from "@mui/material";
+import { CheckCircle, VisibilityOutlined } from "@mui/icons-material";
+import { ThumbUpAltOutlined } from "@mui/icons-material";
+import Player from "xgplayer";
+
+import { Videos } from ".";
+import { fetchFromAPI } from "../utils/fetchFromAPI";
+import { demoProfilePicture } from "../utils/constants";
+
+const VideoDetail = () => {
+  const { id } = useParams();
+  const [videoDetail, setVideoDetail] = useState(null);
+  const [videos, setVideos] = useState([]);
+  const [channelDetails, setChannelDetails] = useState(null);
+  const [expanded, setExpanded] = useState(false);
+  const playerRef = useRef(null); // Ref for player instance
+
+  const toggleExpanded = () => {
+    setExpanded(!expanded);
+  };
+
+  useEffect(() => {
+    fetchFromAPI(`videos?part=snippet,statistics&id=${id}`).then((data) =>
+      setVideoDetail(data.items[0])
+    );
+    fetchFromAPI(`search?part=snippet&relatedToVideoId=${id}&type=video`).then(
+      (data) => setVideos(data.items)
+    );
+  }, [id]);
+
+  useEffect(() => {
+    if (!videoDetail) return;
+    const {
+      snippet: { channelId },
+    } = videoDetail;
+
+    fetchFromAPI(`channels?part=snippet,statistics&id=${channelId}`).then(
+      (data) => setChannelDetails(data?.items[0])
+    );
+  }, [videoDetail]);
+
+  // Initialize xgplayer
+  useEffect(() => {
+    if (!playerRef.current) {
+      playerRef.current = new Player({
+        id: "vs",
+        url: "http://s2.pstatp.com/cdn/expire-1-M/byted-player-videos/1.0.0/xgplayer-demo.mp4", // Your fixed video URL
+        width: "100%",
+        height: "500px", // Adjust height if needed
+      });
+    }
+
+    return () => {
+      if (playerRef.current) {
+        playerRef.current.destroy(); // Clean up on unmount or id change
+        playerRef.current = null;
+      }
+    };
+  }, [id]);
+
+  if (!videoDetail || !videos?.length)
+    return (
+      <Box sx={{ width: "100%" }}>
+        <LinearProgress sx={{ backgroundColor: "#9403fc" }} />
+      </Box>
+    );
+
+  const {
+    snippet: { title, channelId, channelTitle, description, publishedAt },
+    statistics: { viewCount, likeCount },
+  } = videoDetail;
+
+  const formattedDate = format(new Date(publishedAt), "dd-MM-yyyy");
+
+  return (
+    <Box minHeight="90vh" sx={{ maxWidth: "100%", overflowX: "hidden" }}>
+      <Grid container spacing={1}>
+        <Grid item xs={12} md={8}>
+          <Box
+            sx={{
+              bgcolor: "#212121",
+              p: 1,
+              marginBottom: 1,
+            }}
+          >
+            {/* xgplayer container */}
+            <div id="vs" />
+
+            {/* Video details */}
+            <Typography
+              variant="h6"
+              sx={{ marginTop: "16px", color: "#fff", mb: 2 }}
+            >
+              {title}
+            </Typography>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                marginTop: "8px",
+              }}
+            >
+              <Link
+                to={`/channel/${channelId}`}
+                style={{ display: "flex", alignItems: "center" }}
+              >
+                <Avatar
+                  src={
+                    channelDetails?.snippet?.thumbnails?.high?.url ||
+                    demoProfilePicture
+                  }
+                  alt="Channel Logo"
+                />
+
+                <Typography
+                  variant="subtitle1"
+                  sx={{ marginLeft: "8px", color: "#fff" }}
+                >
+                  {channelTitle}
+                  <CheckCircle
+                    sx={{ fontSize: "20px", color: "gray", ml: "5px" }}
+                  />
+                </Typography>
+              </Link>
+
+              {/* Channel stats */}
+              <Box
+                sx={{
+                  marginLeft: "auto",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                {/* Likes */}
+                <Button
+                  variant="contained"
+                  size="small"
+                  aria-label="like"
+                  sx={{
+                    color: "#fff",
+                    bgcolor: "#424242",
+                    textTransform: "none",
+                  }}
+                >
+                  <ThumbUpAltOutlined />
+                  <Typography
+                    variant="body2"
+                    style={{ marginLeft: "5px", color: "#fff" }}
+                  >
+                    {parseInt(likeCount).toLocaleString()}
+                  </Typography>
+                </Button>
+
+                {/* Views */}
+                <Button
+                  variant="contained"
+                  size="small"
+                  aria-label="views"
+                  sx={{
+                    color: "#fff",
+                    marginLeft: "8px",
+                    bgcolor: "#424242",
+                    textTransform: "none",
+                  }}
+                >
+                  <VisibilityOutlined />
+                  <Typography
+                    variant="body2"
+                    style={{ marginLeft: "5px", color: "#fff" }}
+                  >
+                    {parseInt(viewCount).toLocaleString()}
+                  </Typography>
+                </Button>
+
+                {/* Subscriber */}
+                <Button
+                  variant="contained"
+                  size="small"
+                  aria-label="subscriber"
+                  sx={{
+                    color: "#fff",
+                    marginLeft: "8px",
+                    bgcolor: "#424242",
+                    textTransform: "none",
+                  }}
+                >
+                  <Typography sx={{ color: "white" }}>
+                    {parseInt(
+                      channelDetails?.statistics?.subscriberCount
+                    ).toLocaleString()}{" "}
+                    subscribers
+                  </Typography>
+                </Button>
+              </Box>
+            </div>
+
+            {/* Description */}
+            <div style={{ marginTop: "16px" }}>
+              <Typography
+                variant="subtitle1"
+                gutterBottom
+                style={{ color: "#fff", marginBottom: "16px" }}
+              >
+                Date Published: {formattedDate}
+              </Typography>
+
+              <Typography variant="body1" style={{ color: "#fff" }}>
+                {expanded ? description : description.slice(0, 600)}
+              </Typography>
+              {description.length > 600 && (
+                <span
+                  style={{ color: "#498efc", cursor: "pointer" }}
+                  onClick={toggleExpanded}
+                >
+                  {expanded ? "read less" : "read more"}
+                </span>
+              )}
+            </div>
+          </Box>
+        </Grid>
+        <Grid item xs={12} md={4} alignItems="center">
+          <Box
+            style={{
+              backgroundColor: "#181818",
+              padding: "16px",
+              marginBottom: "16px",
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ color: "#fff", marginBottom: "10px" }}
+            >
+              Related Videos
+            </Typography>
+            <Videos videos={videos} md={"350px"} lg={"500px"} hmd={"250px"} />
+          </Box>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
+
+export default VideoDetail;
